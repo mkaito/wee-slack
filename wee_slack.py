@@ -208,7 +208,7 @@ class ProxyWrapper(object):
         self.proxy_user = ""
         self.proxy_password = ""
         self.has_proxy = False
-        
+
         if self.proxy_name:
             self.proxy_string = "weechat.proxy.{}".format(self.proxy_name)
             self.proxy_type = w.config_string(weechat.config_get("{}.type".format(self.proxy_string)))
@@ -220,21 +220,21 @@ class ProxyWrapper(object):
                 self.has_proxy = True
             else:
                 w.prnt("", "\nWarning: weechat.network.proxy_curl is set to {} type (name : {}, conf string : {}). Only HTTP proxy is supported.\n\n".format(self.proxy_type, self.proxy_name, self.proxy_string))
-        
+
     def curl(self):
         if not self.has_proxy:
             return ""
-        
+
         if self.proxy_user and self.proxy_password:
             user = "{}:{}@".format(self.proxy_user, self.proxy_password)
         else:
             user = ""
-                    
+
         if self.proxy_port:
             port = ":{}".format(self.proxy_port)
         else:
             port = ""
-                
+
         return "--proxy {}{}{}".format(user, self.proxy_address, port)
 
 
@@ -2540,6 +2540,10 @@ def subprocess_thread_message(message_json, eventrouter, channel, team):
             if parent_message.thread_channel:
                 parent_message.thread_channel.buffer_prnt(message.sender, text, message.ts, tag_nick=message.sender_plain)
 
+            if config.thread_messages_in_channel:
+                channel.buffer_prnt(
+                    message.sender, '[{}] {}'.format(parent_message.hash, text), message.ts, tag_nick=message.sender_plain)
+
 #    channel = channels.find(message_json["channel"])
 #    server = channel.server
 #    #threadinfo = channel.get_message(message_json["thread_ts"])
@@ -3250,7 +3254,7 @@ def command_register_callback(data, command, return_code, out, err):
         w.prnt("", "ERROR: problem when trying to get Slack OAuth token. Got return code {}. Err: ".format(return_code, err))
         w.prnt("", "Check the network or proxy settings")
         return w.WEECHAT_RC_OK_EAT
-    
+
     if len(out) <= 0:
         w.prnt("", "ERROR: problem when trying to get Slack OAuth token. Got 0 length answer. Err: ".format(err))
         w.prnt("", "Check the network or proxy settings")
@@ -3857,6 +3861,9 @@ class PluginConfig(object):
             desc='When activity occurs on a buffer, unhide it even if it was'
             ' previously hidden (whether by the user or by the'
             ' distracting_channels setting).'),
+        'thread_messages_in_channel': Setting(
+            default='false',
+            desc='When enabled shows thread messages in the parent channel.'),
     }
 
     # Set missing settings to their defaults. Load non-missing settings from
